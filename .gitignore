@@ -4,9 +4,12 @@
 *.html
 !Template/*.html
 
-# Отчёты и выписки
-reports/
+# Отчёты и выписки: игнорируем всё, кроме .gitkeep
+reports/*
+!reports/.gitkeep
+
 Statements/*
+!Statements/.gitkeep
 
 # Python
 __pycache__/
