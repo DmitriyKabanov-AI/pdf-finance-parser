@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>💰 Финансовый Дашборд — %%DATE_FROM%% – %%DATE_TO%%</title>
+<script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+<style>
+:root{
+  --bg:#0a0e1a;--bg2:#111827;--bg3:#1a2235;--card:#1e2d40;
+  --border:#2a3f5f;--accent:#00d4ff;--accent2:#7c3aed;
+  --green:#10b981;--red:#ef4444;--yellow:#f59e0b;--orange:#f97316;
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;overflow-x:hidden}
+.header{background:linear-gradient(135deg,#0a0e1a,#1a1040,#0a1628);padding:18px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;backdrop-filter:blur(8px)}
+.header h1{font-size:1.35rem;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.pbadge{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:4px 13px;font-size:.76rem;color:var(--accent)}
+.container{max-width:1700px;margin:0 auto;padding:22px 26px}
+.stitle{font-size:.95rem;font-weight:600;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:8px;margin-top:22px}
+.stitle::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent);margin-left:10px}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:13px;margin-bottom:26px}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:16px;position:relative;overflow:hidden;transition:transform .2s}
+.kpi-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,212,255,.1)}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:13px 13px 0 0}
+.kpi-card.green::before{background:var(--green)}.kpi-card.red::before{background:var(--red)}
+.kpi-card.yellow::before{background:var(--yellow)}.kpi-card.purple::before{background:var(--accent2)}
+.kpi-card.orange::before{background:var(--orange)}
+.kpi-label{font-size:.68rem;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+.kpi-value{font-size:1.3rem;font-weight:700;margin-bottom:3px}
+.kpi-sub{font-size:.68rem;color:var(--text3)}
+.kpi-icon{position:absolute;top:13px;right:13px;font-size:1.3rem;opacity:.22}
+.cgrid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px;margin-bottom:22px}
+.cc{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:16px}
+.c12{grid-column:span 12}.c8{grid-column:span 8}.c7{grid-column:span 7}
+.c6{grid-column:span 6}.c5{grid-column:span 5}.c4{grid-column:span 4}.c3{grid-column:span 3}
+.ctitle{font-size:.85rem;font-weight:600;margin-bottom:2px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.csub{font-size:.7rem;color:var(--text3);margin-bottom:12px}
+.tab-nav{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:16px;background:var(--bg2);padding:3px;border-radius:9px;border:1px solid var(--border);width:fit-content}
+.tab-btn{padding:6px 14px;border-radius:7px;border:none;background:transparent;color:var(--text2);cursor:pointer;font-size:.78rem;font-weight:500;transition:all .2s}
+.tab-btn.active{background:var(--card);color:var(--accent);box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.tc{display:none}.tc.active{display:block}
+.dtable{width:100%;border-collapse:collapse}
+.dtable th{text-align:left;padding:8px 11px;font-size:.66rem;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border)}
+.dtable td{padding:8px 11px;font-size:.8rem;border-bottom:1px solid rgba(42,63,95,.3);vertical-align:middle}
+.dtable tr:hover td{background:rgba(255,255,255,.02)}
+.chip{padding:2px 9px;border-radius:20px;font-size:.68rem;font-weight:500;border:1px solid;display:inline-block;margin:2px}
+.cr{color:var(--red);border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.06)}
+.cg{color:var(--green);border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.06)}
+.cb{color:var(--accent);border-color:rgba(0,212,255,.3);background:rgba(0,212,255,.06)}
+.cy{color:var(--yellow);border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.06)}
+.rbadge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:20px;font-size:.6rem;font-weight:600;margin-left:5px}
+.rh{background:rgba(239,68,68,.15);color:var(--red)}
+.rm{background:rgba(245,158,11,.15);color:var(--yellow)}
+.ibox{background:rgba(0,212,255,.04);border:1px solid rgba(0,212,255,.12);border-left:3px solid var(--accent);border-radius:7px;padding:8px 11px;margin-top:9px;font-size:.74rem;color:var(--text2);line-height:1.5}
+.ibox b{color:var(--accent)}
+.dbox{background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.2);border-left:3px solid var(--red);border-radius:7px;padding:8px 11px;margin-top:9px;font-size:.74rem;color:var(--text2);line-height:1.5}
+.dbox b{color:var(--red)}
+.pcards{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-bottom:14px}
+.pcard{background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:15px;text-align:center}
+.pnum{font-size:1.4rem;font-weight:700;margin-bottom:2px}
+.plbl{font-size:.7rem;color:var(--text2)}
+.sbox{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:11px}
+.sitem{background:var(--bg3);border-radius:9px;padding:11px;text-align:center}
+.snum{font-size:1.15rem;font-weight:700}.slbl2{font-size:.68rem;color:var(--text2);margin-top:2px}
+.rgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:13px}
+.rcard{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:16px;display:flex;gap:11px;transition:transform .2s}
+.rcard:hover{transform:translateY(-2px)}
+.rcard.critical{border-color:rgba(239,68,68,.35)}
+.rcard.warning{border-color:rgba(245,158,11,.35)}
+.rcard.info{border-color:rgba(0,212,255,.2)}
+.ricon{width:40px;height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex-shrink:0}
+.rcard.critical .ricon{background:rgba(239,68,68,.12)}
+.rcard.warning .ricon{background:rgba(245,158,11,.12)}
+.rcard.info .ricon{background:rgba(0,212,255,.08)}
+.rbody h4{font-size:.83rem;font-weight:600;margin-bottom:4px}
+.rbody p{font-size:.74rem;color:var(--text2);line-height:1.5}
+.sbadge{display:inline-block;margin-top:6px;padding:2px 8px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);border-radius:6px;font-size:.7rem;color:var(--green);font-weight:600}
+.calcgrid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.slg{margin-bottom:14px}
+.sll{display:flex;justify-content:space-between;font-size:.78rem;color:var(--text2);margin-bottom:4px}
+.slv{color:var(--accent);font-weight:600}
+input[type=range]{width:100%;height:5px;-webkit-appearance:none;background:var(--bg);border-radius:3px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:var(--accent);border-radius:50%;cursor:pointer;box-shadow:0 0 6px rgba(0,212,255,.4)}
+.cres{background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:16px}
+.crow{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:.8rem}
+.crow:last-child{border-bottom:none}
+.crow span:last-child{font-weight:600;color:var(--accent)}
+.gbox{text-align:center;padding:13px;background:linear-gradient(135deg,rgba(124,58,237,.08),rgba(0,212,255,.08));border:1px solid rgba(124,58,237,.2);border-radius:9px;margin-top:9px}
+.gnum{font-size:2rem;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+@media(max-width:1100px){.c8,.c7,.c5,.c6,.c4{grid-column:span 12}.calcgrid,.pcards{grid-template-columns:1fr}}
+@media(max-width:640px){.c3{grid-column:span 12}.sbox{grid-template-columns:1fr 1fr}.container{padding:11px}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="display:flex;align-items:center;gap:11px">
+    <span style="font-size:1.6rem">💰</span>
+    <div>
+      <h1>📊 Финансовый Дашборд</h1>
+      <div style="font-size:.7rem;color:var(--text3);margin-top:1px">Анализ поведения, рисков и слабостей</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">
+    <span class="pbadge">📅 %%DATE_FROM%% — %%DATE_TO%%</span>
+    <span class="pbadge" style="color:var(--green)">● %%MONTHS_COUNT%% мес.</span>
+    <div style="font-size:.7rem;color:var(--text3);text-align:right">Сгенерировано:<br>%%GEN_TIME%%</div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- KPI -->
+<div class="stitle">📊 Ключевые показатели</div>
+<div class="kpi-grid">
+  <div class="kpi-card green"><span class="kpi-icon">💵</span>
+    <div class="kpi-label">Общий доход</div>
+    <div class="kpi-value" style="color:var(--green)">%%TOTAL_INCOME%% ₽</div>
+    <div class="kpi-sub">≈%%AVG_MONTHLY_INCOME%% ₽/мес</div></div>
+  <div class="kpi-card red"><span class="kpi-icon">💸</span>
+    <div class="kpi-label">Общие расходы</div>
+    <div class="kpi-value" style="color:var(--red)">%%TOTAL_EXPENSE%% ₽</div>
+    <div class="kpi-sub">≈%%AVG_MONTHLY_EXPENSE%% ₽/мес</div></div>
+  <div class="kpi-card %%NET_CARD%%"><span class="kpi-icon">🏦</span>
+    <div class="kpi-label">Чистый баланс</div>
+    <div class="kpi-value" style="color:%%NET_COLOR%%">%%NET_SIGN%%%%NET_BALANCE%% ₽</div>
+    <div class="kpi-sub">За весь период</div></div>
+  <div class="kpi-card %%SAVE_CARD%%"><span class="kpi-icon">💾</span>
+    <div class="kpi-label">Норма сбережения</div>
+    <div class="kpi-value" style="color:%%SAVE_COLOR%%">%%SAVE_RATE%%%</div>
+    <div class="kpi-sub">%%SAVE_STATUS%% (цель 20%+)</div></div>
+  <div class="kpi-card %%COV_CARD%%"><span class="kpi-icon">⚡</span>
+    <div class="kpi-label">Коэф. покрытия</div>
+    <div class="kpi-value" style="color:%%COV_COLOR%%">%%COVERAGE_RATIO%%</div>
+    <div class="kpi-sub">%%COV_STATUS%%</div></div>
+  <div class="kpi-card purple"><span class="kpi-icon">🎯</span>
+    <div class="kpi-label">Импульсивные траты</div>
+    <div class="kpi-value" style="color:var(--accent2)">%%IMPULSIVE_PCT%%%</div>
+    <div class="kpi-sub">%%IMPULSIVE_SUM%% ₽</div></div>
+  <div class="kpi-card red"><span class="kpi-icon">🕳</span>
+    <div class="kpi-label">«Дырявые» дни</div>
+    <div class="kpi-value" style="color:var(--red)">%%LEAKY_DAYS%%</div>
+    <div class="kpi-sub">Расход &gt;120% дневного дохода</div></div>
+</div>
+
+<!-- TABS -->
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="sw('dynamics',this)">📈 Динамика</button>
+  <button class="tab-btn" onclick="sw('behavior',this)">🧠 Поведение</button>
+  <button class="tab-btn" onclick="sw('taxi',this)">🚖 Такси vs Метро</button>
+  <button class="tab-btn" onclick="sw('fines',this)">🚨 Штрафы и комиссии</button>
+  <button class="tab-btn" onclick="sw('timeofday',this)">🕐 Время суток</button>
+  <button class="tab-btn" onclick="sw('categories',this)">📦 Категории</button>
+  <button class="tab-btn" onclick="sw('leaky',this)">📈 Утекающие категории</button>
+  <button class="tab-btn" onclick="sw('flows',this)">🌊 Денежный поток</button>
+  <button class="tab-btn" onclick="sw('forecast',this)">🔮 Прогноз</button>
+  <button class="tab-btn" onclick="sw('recs',this)">💡 Рекомендации</button>
+</div>
+
+<!-- ════ ДИНАМИКА ════ -->
+<div id="tab-dynamics" class="tc active">
+<div class="cgrid">
+  <div class="cc c12">
+    <div class="ctitle">📈 Накопленный баланс с зонами риска</div>
+    <div class="csub">Красные точки — баланс ниже медианы за 30 дней</div>
+    <div id="balanceChart" style="height:300px"></div>
+  </div>
+  <div class="cc c6">
+    <div class="ctitle">🗓 Доход vs Расход по месяцам</div>
+    <div class="csub">Каждый месяц на оси X</div>
+    <div id="monthlyChart" style="height:260px"></div>
+  </div>
+  <div class="cc c6">
+    <div class="ctitle">⚡ Траты после поступления дохода</div>
+    <div class="csub">Средние расходы за 24/48/72ч vs обычный день</div>
+    <div id="burstChart" style="height:220px"></div>
+    <div class="ibox"><b>Совет:</b> Если 24ч после дохода значительно выше нормы — переводите 15% на накопительный счёт в день зарплаты.</div>
+  </div>
+  <div class="cc c12">
+    <div class="ctitle">🌡 Тепловая карта расходов: Час × День недели</div>
+    <div class="csub">Темнее = больше средний расход. Ось X: каждый час (0–23)</div>
+    <div id="heatmapChart" style="height:310px"></div>
+  </div>
+</div>
+</div>
+
+<!-- ════ ПОВЕДЕНИЕ ════ -->
+<div id="tab-behavior" class="tc">
+<div class="cgrid">
+  <div class="cc c7">
+    <div class="ctitle">🛵 Доставка еды: средний чек по дням недели
+      <span class="rbadge rh">Анализ паттернов</span></div>
+    <div class="csub">В какие дни вы заказываете больше?</div>
+    <div id="deliveryDowChart" style="height:250px"></div>
+  </div>
+  <div class="cc c5">
+    <div class="ctitle">🏙 Структура доставки</div>
+    <div class="csub">Доли сервисов</div>
+    <div id="deliveryPieChart" style="height:250px"></div>
+  </div>
+  <div class="cc c12">
+    <div class="ctitle">☕ Кофе-эффект — мелкие траты в кафе ≤500 ₽</div>
+    <div class="csub">Помесячная динамика</div>
+    <div class="sbox">
+      <div class="sitem"><div class="snum" style="color:var(--yellow)">%%COFFEE_COUNT%%</div><div class="slbl2">Транзакций</div></div>
+      <div class="sitem"><div class="snum" style="color:var(--orange)">%%COFFEE_TOTAL%% ₽</div><div class="slbl2">Итого</div></div>
+      <div class="sitem"><div class="snum" style="color:var(--red)">%%COFFEE_PER_MONTH%% ₽</div><div class="slbl2">В месяц</div></div>
+      <div class="sitem"><div class="snum" style="color:var(--accent)">%%COFFEE_AVG%% ₽</div><div class="slbl2">Средний чек</div></div>
+    </div>
+    <div id="coffeeChart" style="height:220px"></div>
+  </div>
+  <div class="cc c12">
+    <div class="ctitle">🧠 Распределение расходов по часам</div>
+    <div class="csub">Фиолетовый (00–08) = ночь | Жёлтый (08–16) = день | Красный (16–00) = вечер</div>
+    <div id="hourlyChart" style="height:280px"></div>
+  </div>
+</div>
+</div>
+
+<!-- ════ ТАКСИ vs МЕТРО ════ -->
+<div id="tab-taxi" class="tc">
+<div class="cgrid">
+  <div class="cc c12">
+    <div class="ctitle">🚖 Такси vs 🚇 Метро — помесячное сравнение</div>
+    <div class="csub">Такси: Яндекс Такси/Go, Ситимобил, Whoosh, Юрент, МТС Юрент &nbsp;|&nbsp; Метро: Мосметро, Тройка, Mos.Transport</div>
+    <div id="taxiChart" style="height:300px"></div>
+    <div class="ibox">
+      🚖 Такси итого: <b>%%TAXI_TOTAL%% ₽</b> &nbsp;|&nbsp;
+      🚇 Метро итого: <b>%%METRO_TOTAL%% ₽</b> &nbsp;|&nbsp;
+      💡 Замените 60% поездок на такси метром — экономия <b id="taxiSavingSpan"></b>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ════ ШТРАФЫ ════ -->
+<div id="tab-fines" class="tc">
+<div class="cgrid">
+  <div class="cc c12">
+    <div class="ctitle">🚨 Штрафы, Пени и Комиссии</div>
+    <div class="csub">Ключевые слова: штраф, ГИБДД, МАДИ, АМПП, пеня, пени, комиссия, госпошлина, защита карты, налог</div>
+    <div style="margin-bottom:10px">
+      <span class="chip cr">Итого: %%FINES_TOTAL%% ₽</span>
+      <span class="chip cy">Транзакций: %%FINES_COUNT%%</span>
+    </div>
+    <div id="finesPieChart" style="height:250px"></div>
+    <table class="dtable" style="margin-top:12px">
+      <thead><tr><th>Дата</th><th>Описание</th><th>Категория</th><th>Сумма</th></tr></thead>
+      <tbody id="finesTable"></tbody>
+    </table>
+  </div>
+</div>
+</div>
+
+<!-- ════ ВРЕМЯ СУТОК ════ -->
+<div id="tab-timeofday" class="tc">
+<div class="stitle">🕐 Три периода суток</div>
+<div class="pcards" id="periodCards"></div>
+<div class="cgrid">
+  <div class="cc c4">
+    <div class="ctitle">🌙 Ночь (00–08): категории</div>
+    <div id="nightPieChart" style="height:280px"></div>
+  </div>
+  <div class="cc c4">
+    <div class="ctitle">☀️ День (08–16): категории</div>
+    <div id="dayPieChart" style="height:280px"></div>
+  </div>
+  <div class="cc c4">
+    <div class="ctitle">🌆 Вечер (16–00): категории</div>
+    <div id="evePieChart" style="height:280px"></div>
+  </div>
+</div>
+</div>
+
+<!-- ════ КАТЕГОРИИ ════ -->
+<div id="tab-categories" class="tc">
+<div class="cgrid">
+  <div class="cc c12">
+    <div class="ctitle">🫧 Категории: Сумма vs Частота (пузыри)</div>
+    <div class="csub">Размер пузыря пропорционален среднему чеку. Свободное расположение.</div>
+    <div id="bubbleChart" style="height:400px"></div>
+  </div>
+  <div class="cc c12">
+    <div class="ctitle">🔔 Предполагаемые подписки</div>
+    <div class="csub">Регулярные платежи, повторяющиеся ≥2 месяца</div>
+    <table class="dtable">
+      <thead><tr><th>Описание</th><th>Раз</th><th>Месяцев</th><th>Средняя сумма</th><th>Итого</th><th>Последний</th></tr></thead>
+      <tbody id="subsTable"></tbody>
+    </table>
+  </div>
+</div>
+</div>
+
+<!-- ════ УТЕКАЮЩИЕ КАТЕГОРИИ ════ -->
+<div id="tab-leaky" class="tc">
+<div class="cgrid">
+  <div class="cc c12">
+    <div class="ctitle">📈 Топ-5 «утекающих» категорий <span class="rbadge rh">Рост расходов</span></div>
+    <div class="csub">Помесячная динамика + изменения (Waterfall)</div>
+    <div id="growthChart" style="height:280px"></div>
+  </div>
+  <div class="cc c12">
+    <div class="ctitle">📊 Детализация изменений по месяцам</div>
+    <div class="csub">Таблица с процентным изменением и индикаторами роста/падения</div>
+    <div id="waterfallTable"></div>
+  </div>
+</div>
+</div>
+
+<!-- ════ ДЕНЕЖНЫЙ ПОТОК ════ -->
+<div id="tab-flows" class="tc">
+<div class="cgrid">
+  <div class="cc c12">
+    <div class="ctitle">🌊 Sankey: Поток денег</div>
+    <div class="csub">🟢 Зелёный слева = доходы → 🔴 Красный справа = расходы</div>
+    <div id="sankeyChart" style="height:520px"></div>
+  </div>
+  <div class="cc c6">
+    <div class="ctitle">🥧 Структура расходов</div>
+    <div class="csub">Полная классификация — «Прочее» ≤5%</div>
+    <div id="expPieChart" style="height:340px"></div>
+  </div>
+  <div class="cc c6">
+    <div class="ctitle">💚 Структура доходов</div>
+    <div id="incPieChart" style="height:340px"></div>
+  </div>
+</div>
+</div>
+
+<!-- ════ ПРОГНОЗ ════ -->
+<div id="tab-forecast" class="tc">
+<div class="cgrid">
+  <div class="cc c12">
+    <div class="ctitle">🎛 Калькулятор «Что если»</div>
+    <div class="csub">Сократите расходы в категориях — увидите, когда достигнете цели</div>
+    <div class="calcgrid">
+      <div id="calcSliders"></div>
+      <div>
+        <div class="cres">
+          <div style="font-size:.7rem;color:var(--text3);margin-bottom:9px;text-transform:uppercase;letter-spacing:.04em">Результат сценария</div>
+          <div class="crow"><span>Текущие расходы/мес</span><span id="calcCurExp">0 ₽</span></div>
+          <div class="crow"><span>Экономия/мес</span><span id="calcSaving" style="color:var(--green)">+0 ₽</span></div>
+          <div class="crow"><span>Новые расходы/мес</span><span id="calcNewExp">0 ₽</span></div>
+          <div class="crow"><span>Откладываете в мес</span><span id="calcMonthSave">0 ₽</span></div>
+          <div class="crow"><span>Новая норма сбережения</span><span id="calcSavRate">0%</span></div>
+        </div>
+        <div class="gbox">
+          <div style="font-size:.78rem;color:var(--text2);margin-bottom:2px">До цели <span id="goalAmt">100 000 ₽</span> осталось</div>
+          <div class="gnum" id="calcMonths">?</div>
+          <div style="font-size:.78rem;color:var(--text2)">месяцев</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ════ РЕКОМЕНДАЦИИ ════ -->
+<div id="tab-recs" class="tc">
+  <div class="stitle">💡 Автоматические рекомендации</div>
+  <div class="rgrid" id="recsGrid"></div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+var A = %%DATA_JSON%%;
+var PC = {responsive:true, displayModeBar:false};
+var GC = 'rgba(42,63,95,0.5)';
+var CLR = ['#10b981','#ef4444','#f59e0b','#3b82f6','#a855f7',
+           '#06b6d4','#84cc16','#f97316','#6366f1','#64748b',
+           '#ec4899','#14b8a6','#fbbf24','#818cf8','#fb923c','#22d3ee'];
+
+function fn(n){
+  if(n==null)return'—';var v=Number(n);if(isNaN(v))return String(n);
+  return v.toLocaleString('ru-RU',{maximumFractionDigits:0});
+}
+function mkL(ex){
+  var b={paper_bgcolor:'transparent',plot_bgcolor:'transparent',
+    font:{color:'#94a3b8',family:'Segoe UI,system-ui,sans-serif',size:11},
+    margin:{t:20,b:40,l:60,r:20},
+    xaxis:{gridcolor:GC,zerolinecolor:GC},
+    yaxis:{gridcolor:GC,zerolinecolor:GC},
+    legend:{bgcolor:'rgba(0,0,0,0)',bordercolor:'transparent'}};
+  if(ex)for(var k in ex)b[k]=ex[k];return b;
+}
+
+// ══ БАЛАНС ══
+function renderBalance(){
+  var rX=[],rY=[];
+  for(var i=0;i<A.daily_balance.length;i++){
+    if(A.daily_balance[i]<A.daily_med30[i]){rX.push(A.daily_dates[i]);rY.push(A.daily_balance[i]);}
+  }
+  Plotly.newPlot('balanceChart',[
+    {x:A.daily_dates,y:A.daily_med30,mode:'lines',name:'Медиана 30д',line:{color:'rgba(100,116,139,0.4)',dash:'dot',width:1},hoverinfo:'skip'},
+    {x:rX,y:rY,mode:'markers',name:'Зоны риска',marker:{color:'rgba(239,68,68,0.55)',size:5}},
+    {x:A.daily_dates,y:A.daily_balance,mode:'lines',name:'Баланс',line:{color:'#00d4ff',width:2},fill:'tozeroy',fillcolor:'rgba(0,212,255,0.05)',
+     hovertemplate:'%{x}<br>Баланс: %{y:,.0f} ₽<extra></extra>'}
+  ],mkL({showlegend:true,xaxis:{gridcolor:GC,zerolinecolor:GC,tickangle:-30,nticks:20},
+    shapes:[{type:'line',x0:A.daily_dates[0],x1:A.daily_dates[A.daily_dates.length-1],y0:0,y1:0,line:{color:'rgba(239,68,68,0.5)',dash:'dash',width:1}}]}),PC);
+}
+
+// ══ МЕСЯЧНЫЙ ══
+function renderMonthly(){
+  Plotly.newPlot('monthlyChart',[
+    {x:A.months,y:A.monthly_income,type:'bar',name:'Доход',marker:{color:'rgba(16,185,129,0.75)'},offsetgroup:1},
+    {x:A.months,y:A.monthly_expense,type:'bar',name:'Расход',marker:{color:'rgba(239,68,68,0.75)'},offsetgroup:2},
+    {x:A.months,y:A.monthly_balance,type:'scatter',mode:'lines+markers',name:'Остаток',line:{color:'#00d4ff',width:2},yaxis:'y2',marker:{size:5}}
+  ],mkL({barmode:'group',showlegend:true,
+    xaxis:{gridcolor:GC,zerolinecolor:GC,tickmode:'array',tickvals:A.months,ticktext:A.months},
+    yaxis:{gridcolor:GC,zerolinecolor:GC,title:'₽'},
+    yaxis2:{title:'Остаток ₽',overlaying:'y',side:'right',gridcolor:'transparent'},
+    legend:{orientation:'h',y:-0.28}}),PC);
+}
+
+// ══ BURST ══
+function renderBurst(){
+  var sb=A.salary_burst;
+  Plotly.newPlot('burstChart',[
+    {x:['24ч','48ч','72ч'],y:[sb['24h'],sb['48h'],sb['72h']],type:'bar',name:'После дохода',
+     marker:{color:['rgba(239,68,68,0.85)','rgba(249,115,22,0.75)','rgba(245,158,11,0.70)']},
+     hovertemplate:'%{x}: %{y:,.0f} ₽<extra></extra>'},
+    {x:['24ч','48ч','72ч'],y:[sb.normal,sb.normal,sb.normal],type:'scatter',mode:'lines',
+     name:'Обычный день',line:{color:'#10b981',dash:'dash',width:2}}
+  ],mkL({showlegend:true,yaxis:{gridcolor:GC,zerolinecolor:GC,title:'₽'},legend:{orientation:'h',y:-0.28}}),PC);
+}
+
+// ══ ТЕПЛОВАЯ КАРТА (каждый час 0–23) ══
+function renderHeatmap(){
+  var hrs=[];for(var h=0;h<24;h++)hrs.push(String(h));
+  Plotly.newPlot('heatmapChart',[{
+    z:A.heatmap_z,x:hrs,y:A.heatmap_days,type:'heatmap',
+    colorscale:[[0,'rgba(16,185,129,0.1)'],[0.5,'rgba(245,158,11,0.6)'],[1,'rgba(239,68,68,0.9)']],
+    showscale:true,
+    hovertemplate:'%{y} %{x}ч<br>Средний расход: %{z:,.0f} ₽<extra></extra>'
+  }],mkL({margin:{t:10,b:40,l:55,r:60},
+    xaxis:{gridcolor:GC,zerolinecolor:GC,title:'Час',tickmode:'array',tickvals:hrs,ticktext:hrs,dtick:1}}),PC);
+}
+
+// ══ ЧАСОВОЙ ══
+function renderHourly(){
+  var hrs=[];var bc=[];
+  for(var h=0;h<24;h++){
+    hrs.push(h+'ч');
+    bc.push(h<8?'rgba(124,58,237,0.75)':h<16?'rgba(245,158,11,0.75)':'rgba(239,68,68,0.75)');
+  }
+  Plotly.newPlot('hourlyChart',[
+    {x:hrs,y:A.hourly_amounts,type:'bar',name:'Сумма (₽)',marker:{color:bc},
+     hovertemplate:'%{x}: %{y:,.0f} ₽<extra></extra>'},
+    {x:hrs,y:A.hourly_counts,type:'scatter',mode:'lines+markers',name:'Кол-во',yaxis:'y2',
+     line:{color:'#00d4ff',width:1.5},marker:{size:4}}
+  ],mkL({showlegend:true,
+    yaxis:{gridcolor:GC,zerolinecolor:GC,title:'Сумма ₽'},
+    yaxis2:{title:'Кол-во',overlaying:'y',side:'right',gridcolor:'transparent'},
+    legend:{orientation:'h',y:-0.28}}),PC);
+}
+
+// ══ ДОСТАВКА: средний чек по дням недели ══
+function renderDeliveryDow(){
+  var colors=A.delivery_dow_avg.map(function(v,i){
+    return i>=5?'rgba(239,68,68,0.85)':'rgba(249,115,22,0.75)';
+  });
+  Plotly.newPlot('deliveryDowChart',[{
+    x:A.delivery_dow_labels,y:A.delivery_dow_avg,type:'bar',
+    marker:{color:colors},
+    hovertemplate:'%{x}: %{y:,.0f} ₽<extra></extra>',
+    text:A.delivery_dow_avg.map(function(v){return fn(v)+' ₽';}),
+    textposition:'outside',textfont:{color:'#94a3b8',size:10}
+  }],mkL({showlegend:false,yaxis:{gridcolor:GC,zerolinecolor:GC,title:'Средний чек ₽'}}),PC);
+}
+function renderDeliveryPie(){
+  if(!A.delivery_pie_labels||A.delivery_pie_labels.length===0)return;
+  Plotly.newPlot('deliveryPieChart',[{
+    labels:A.delivery_pie_labels,values:A.delivery_pie_values,type:'pie',hole:0.45,
+    marker:{colors:CLR},textinfo:'label+percent',textposition:'auto',
+    textfont:{color:'#e2e8f0',size:10},
+    hovertemplate:'%{label}: %{value:,.0f} ₽ (%{percent})<extra></extra>'
+  }],mkL({margin:{t:20,b:20,l:10,r:10},showlegend:false}),PC);
+}
+
+// ══ КОФЕ ══
+function renderCoffee(){
+  Plotly.newPlot('coffeeChart',[
+    {x:A.months,y:A.coffee_monthly,type:'bar',name:'Кафе ≤500₽',marker:{color:'rgba(245,158,11,0.78)'},
+     hovertemplate:'%{x}: %{y:,.0f} ₽<extra></extra>'}
+  ],mkL({showlegend:false,yaxis:{gridcolor:GC,zerolinecolor:GC,title:'₽'},
+    xaxis:{gridcolor:GC,tickmode:'array',tickvals:A.months,ticktext:A.months}}),PC);
+}
+
+// ══ ТАКСИ vs МЕТРО ══
+function renderTaxi(){
+  Plotly.newPlot('taxiChart',[
+    {x:A.months,y:A.taxi_monthly,type:'bar',name:'🚖 Такси',marker:{color:'rgba(239,68,68,0.75)'},
+     hovertemplate:'%{x}: %{y:,.0f} ₽<extra></extra>'},
+    {x:A.months,y:A.metro_monthly,type:'bar',name:'🚇 Метро',marker:{color:'rgba(16,185,129,0.75)'},
+     hovertemplate:'%{x}: %{y:,.0f} ₽<extra></extra>'}
+  ],mkL({barmode:'group',showlegend:true,
+    xaxis:{gridcolor:GC,tickmode:'array',tickvals:A.months,ticktext:A.months},
+    yaxis:{gridcolor:GC,zerolinecolor:GC,title:'₽'},
+    legend:{orientation:'h',y:-0.28}}),PC);
+  var el=document.getElementById('taxiSavingSpan');
+  if(el)el.textContent=fn(Math.round(A.taxi_total*0.6))+' ₽';
+}
+
+// ══ ШТРАФЫ ══
+function renderFines(){
+  var tb=document.getElementById('finesTable');
+  if(!tb)return;
+  if(!A.fines||A.fines.length===0){
+    tb.innerHTML='<tr><td colspan="4" style="color:var(--text3);padding:12px">Штрафов и комиссий не обнаружено ✓</td></tr>';return;
+  }
+  var h='';
+  for(var i=0;i<A.fines.length;i++){
+    var f=A.fines[i];
+    h+='<tr><td style="color:var(--text3);white-space:nowrap">'+f.date+'</td>'+
+      '<td>'+f.desc+'</td><td><span class="chip cr">'+f.cat+'</span></td>'+
+      '<td style="color:var(--red);font-weight:600">−'+fn(f.amount)+' ₽</td></tr>';
+  }
+  tb.innerHTML=h;
+  // Pie по подтипам
+  if(A.fines_by_cat_labels&&A.fines_by_cat_labels.length>0){
+    Plotly.newPlot('finesPieChart',[{
+      labels:A.fines_by_cat_labels,values:A.fines_by_cat_values,type:'pie',hole:0.45,
+      marker:{colors:['#ef4444','#f97316','#f59e0b','#a855f7','#64748b']},
+      textinfo:'label+percent',textposition:'auto',textfont:{color:'#e2e8f0',size:10},
+      hovertemplate:'%{label}: %{value:,.0f} ₽<extra></extra>'
+    }],mkL({margin:{t:10,b:10,l:10,r:10},showlegend:false}),PC);
+  }
+}
+
+// ══ ВРЕМЯ СУТОК — 3 pie с минимальным «Прочее» ══
+function renderPeriods(){
+  var ps=A.period_stats;
+  var keys=['night','day','evening'];
+  var icons=['🌙','☀️','🌆'];
+  var names=['Ночь (00–08)','День (08–16)','Вечер (16–00)'];
+  var cols=['var(--accent2)','var(--yellow)','var(--orange)'];
+  var ch='';
+  for(var i=0;i<3;i++){
+    var p=ps[keys[i]]||{sum:0,count:0,pct:0};
+    ch+='<div class="pcard"><div style="font-size:1.7rem;margin-bottom:5px">'+icons[i]+'</div>'+
+      '<div class="pnum" style="color:'+cols[i]+'">'+fn(p.sum)+' ₽</div>'+
+      '<div class="plbl">'+names[i]+'</div>'+
+      '<div style="margin-top:5px"><span class="chip cy">'+p.pct+'%</span> расходов</div>'+
+      '<div style="font-size:.7rem;color:var(--text3);margin-top:3px">'+p.count+' транзакций</div></div>';
+  }
+  document.getElementById('periodCards').innerHTML=ch;
+
+  var pieIds=['nightPieChart','dayPieChart','evePieChart'];
+  for(var i=0;i<3;i++){
+    var p=ps[keys[i]]||{};
+    var labels=p.top_cats_labels||[];
+    var values=p.top_cats_values||[];
+    if(labels.length>0){
+      Plotly.newPlot(pieIds[i],[{
+        labels:labels,values:values,type:'pie',hole:0.45,
+        marker:{colors:CLR.slice(i*3)},textinfo:'label+percent',textposition:'auto',
+        textfont:{color:'#e2e8f0',size:9},
+        hovertemplate:'%{label}: %{value:,.0f} ₽ (%{percent})<extra></extra>'
+      }],mkL({margin:{t:15,b:15,l:5,r:5},showlegend:false}),PC);
+    }
+  }
+}
+
+// ══ ПУЗЫРИ (свободное расположение, площадь пропорциональна) ══
+function renderBubble(){
+  // 1. Сортируем категории по общей сумме (cat_totals) по возрастанию
+  var indices = A.cat_labels.map((_, idx) => idx);
+  indices.sort(function(a, b) {
+    return A.cat_totals[a] - A.cat_totals[b];
+  });
+
+  var sortedLabels = indices.map(i => A.cat_labels[i]);
+  var sortedTotals = indices.map(i => A.cat_totals[i]);
+  var sortedCounts = indices.map(i => A.cat_counts[i]);   // не используем для позиции, но оставим для ховера
+  var sortedAvgs   = indices.map(i => A.cat_avgs[i]);
+
+  // 2. X = порядковый номер (ранг), Y = общая сумма
+  var ranks = sortedLabels.map((_, idx) => idx + 1);  // 1,2,3...
+
+  // 3. Нормализация размера пузыря: от 20 до 80 пикселей пропорционально корню из суммы
+  var maxTotal = Math.max.apply(null, sortedTotals);
+  var minTotal = Math.min.apply(null, sortedTotals);
+  var sizes = sortedTotals.map(function(v){
+    // избегаем деления на ноль
+    if (maxTotal === minTotal) return 40;
+    // линейное масштабирование от 20 до 80
+    var norm = (v - minTotal) / (maxTotal - minTotal);
+    return 20 + norm * 60;
+  });
+
+  // 4. Строим график
+  Plotly.newPlot('bubbleChart', [{
+    x: ranks,
+    y: sortedTotals,
+    mode: 'markers+text',
+    text: sortedLabels,
+    textposition: 'top center',
+    textfont: { size: 10, color: '#e2e8f0' },
+    marker: {
+      size: sizes,
+      color: CLR.slice(0, sortedLabels.length),
+      opacity: 0.85,
+      sizemode: 'diameter',   // диаметр соответствует значению
+      sizeref: 1,
+      line: { color: 'rgba(255,255,255,0.2)', width: 1 }
+    },
+    customdata: sortedAvgs,
+    hovertemplate: '<b>%{text}</b><br>Сумма: %{y:,.0f} ₽<br>Средний чек: %{customdata:,.0f} ₽<extra></extra>'
+  }], mkL({
+    xaxis: {
+      title: 'Ранг (от меньших расходов к большим)',
+      tickvals: ranks,
+      ticktext: ranks,
+      gridcolor: GC,
+      zerolinecolor: GC
+    },
+    yaxis: {
+      title: 'Общая сумма расходов (₽)',
+      gridcolor: GC,
+      zerolinecolor: GC
+    },
+    showlegend: false
+  }), PC);
+}
+
+// ══ УТЕКАЮЩИЕ + WATERFALL ТАБЛИЦА ══
+function renderGrowth(){
+  var traces=A.leaky_cats.map(function(cat){
+    return{x:A.months,y:cat.values,mode:'lines+markers',
+      name:cat.name+' ('+((cat.growth>0)?'+':'')+cat.growth+'%)',
+      line:{color:cat.color,width:2},marker:{size:5},
+      hovertemplate:'%{x}: %{y:,.0f} ₽<extra></extra>'};
+  });
+  Plotly.newPlot('growthChart',traces,mkL({showlegend:true,
+    yaxis:{gridcolor:GC,zerolinecolor:GC,title:'₽'},
+    xaxis:{gridcolor:GC,tickmode:'array',tickvals:A.months,ticktext:A.months},
+    legend:{orientation:'h',y:-0.28}}),PC);
+
+  // Waterfall таблица
+  var wt=document.getElementById('waterfallTable');
+  if(!wt||!A.leaky_cats||A.leaky_cats.length===0)return;
+  var h='<table class="dtable"><thead><tr><th>Категория</th><th>Рост</th>';
+  for(var m=0;m<A.months.length;m++)h+='<th>'+A.months[m]+'</th>';
+  h+='</tr></thead><tbody>';
+  for(var i=0;i<A.leaky_cats.length;i++){
+    var c=A.leaky_cats[i];
+    h+='<tr><td style="font-weight:600;color:'+c.color+'">'+c.name+'</td>';
+    h+='<td><span class="chip '+(c.growth>0?'cr':'cg')+'">'+((c.growth>0)?'+':'')+c.growth+'%</span></td>';
+    for(var m=0;m<c.values.length;m++){
+      var ch2=c.changes[m];
+      var arrow=ch2>0?'<span style="color:var(--red)">▲+'+fn(ch2)+'</span>':
+                ch2<0?'<span style="color:var(--green)">▼'+fn(ch2)+'</span>':'—';
+      h+='<td>'+fn(c.values[m])+' ₽<br><span style="font-size:.65rem">'+arrow+'</span></td>';
+    }
+    h+='</tr>';
+  }
+  h+='</tbody></table>';
+  wt.innerHTML=h;
+}
+
+// ══ ПОДПИСКИ ══
+function renderSubs(){
+  var tb=document.getElementById('subsTable');
+  if(!tb||!A.subscriptions)return;
+  if(A.subscriptions.length===0){
+    tb.innerHTML='<tr><td colspan="6" style="color:var(--text3);padding:12px">Регулярных платежей не найдено</td></tr>';return;
+  }
+  var h='';
+  for(var i=0;i<A.subscriptions.length;i++){
+    var s=A.subscriptions[i];
+    h+='<tr><td>'+s.name+'</td><td style="color:var(--text3)">'+s.count+'x</td>'+
+      '<td style="color:var(--text3)">'+s.months_seen+'</td>'+
+      '<td style="color:var(--yellow);font-weight:600">'+fn(s.avg_amount)+' ₽</td>'+
+      '<td>'+fn(s.total)+' ₽</td>'+
+      '<td style="color:var(--text3)">'+s.last_date+'</td></tr>';
+  }
+  tb.innerHTML=h;
+}
+
+// ══ SANKEY (зелёный слева — доходы, красный справа — расходы) ══
+function renderSankey(){
+  var sk=A.sankey;
+  var midIdx=sk.labels.indexOf('💰 ДОХОДЫ');
+  var nc=sk.labels.map(function(lbl,i){
+    if(i<midIdx)return'#10b981';
+    if(i===midIdx)return'#7c3aed';
+    return'#ef4444';
+  });
+  Plotly.newPlot('sankeyChart',[{
+    type:'sankey',arrangement:'snap',
+    node:{pad:18,thickness:20,line:{color:'rgba(255,255,255,0.08)',width:0.5},
+      label:sk.labels,color:nc,
+      hovertemplate:'%{label}<br><b>%{value:,.0f} ₽</b><extra></extra>'},
+    link:{source:sk.src,target:sk.tgt,value:sk.val,color:sk.colors,
+      hovertemplate:'%{source.label} → %{target.label}<br><b>%{value:,.0f} ₽</b><extra></extra>'}
+  }],mkL({margin:{t:30,b:20,l:20,r:20},font:{color:'#e2e8f0',size:11}}),PC);
+}
+
+// ══ РАСХОДНЫЕ/ДОХОДНЫЕ PIE ══
+function renderPies(){
+  Plotly.newPlot('expPieChart',[{
+    labels:A.exp_pie_labels,values:A.exp_pie_values,type:'pie',hole:0.42,
+    marker:{colors:CLR},textinfo:'label+percent',textposition:'auto',
+    textfont:{color:'#e2e8f0',size:10},
+    hovertemplate:'%{label}: %{value:,.0f} ₽ (%{percent})<extra></extra>'
+  }],mkL({margin:{t:20,b:20,l:10,r:10},showlegend:true,
+    legend:{orientation:'h',y:-0.2,font:{size:10}}}),PC);
+
+  Plotly.newPlot('incPieChart',[{
+    labels:A.inc_pie_labels,values:A.inc_pie_values,type:'pie',hole:0.42,
+    marker:{colors:['#10b981','#3b82f6','#06b6d4','#84cc16','#f59e0b','#a855f7']},
+    textinfo:'label+percent',textposition:'auto',textfont:{color:'#e2e8f0',size:10},
+    hovertemplate:'%{label}: %{value:,.0f} ₽ (%{percent})<extra></extra>'
+  }],mkL({margin:{t:20,b:20,l:10,r:10},showlegend:true,
+    legend:{orientation:'h',y:-0.2,font:{size:10}}}),PC);
+}
+
+// ══ КАЛЬКУЛЯТОР «ЧТО ЕСЛИ» ══
+var calcCats=A.calc_cats||{};
+var calcKeys=Object.keys(calcCats).filter(function(k){return calcCats[k]>100;}).sort(function(a,b){return calcCats[b]-calcCats[a];}).slice(0,10);
+var C_INC=A.avg_monthly_income;
+var C_EXP=A.avg_monthly_expense;
+
+function buildCalcSliders(){
+  var el=document.getElementById('calcSliders');if(!el)return;
+  var icons={'Доставка еды':'🛵','Кафе/Рестораны':'☕','Такси':'🚖','Онлайн-покупки':'🛍',
+    'Подписки':'🔔','Продукты':'🛒','Развлечения':'🎭','Одежда/Обувь':'👗',
+    'Связь/Интернет':'📱','Комиссии':'💳','Электросамокат/Зарядка':'🛴',
+    'Фастфуд':'🍔','Защита карты':'🛡','Переводы исходящие':'💸'};
+  var h='';
+  for(var i=0;i<calcKeys.length;i++){
+    var k=calcKeys[i];
+    var icon=icons[k]||'📦';
+    h+='<div class="slg"><div class="sll"><span>'+icon+' '+k+' ('+fn(calcCats[k])+' ₽/мес)</span>'+
+      '<span class="slv" id="vCalc'+i+'">−0%</span></div>'+
+      '<input type="range" min="0" max="100" value="0" id="sCalc'+i+'" oninput="updateCalc()"></div>';
+  }
+  h+='<div class="slg"><div class="sll"><span>🎯 Целевая сумма</span>'+
+    '<span class="slv" id="vGoal">100 000 ₽</span></div>'+
+    '<input type="range" min="10000" max="2000000" value="100000" step="10000" id="sGoal" oninput="updateCalc()"></div>';
+  el.innerHTML=h;
+}
+
+function updateCalc(){
+  var saving=0;
+  for(var i=0;i<calcKeys.length;i++){
+    var el=document.getElementById('sCalc'+i);
+    var lbl=document.getElementById('vCalc'+i);
+    if(!el)continue;
+    var pct=parseInt(el.value,10);
+    if(lbl)lbl.textContent='−'+pct+'%';
+    saving+=calcCats[calcKeys[i]]*pct/100;
+  }
+  saving=Math.round(saving);
+  var goalEl=document.getElementById('sGoal');
+  var goal=goalEl?parseInt(goalEl.value,10):100000;
+  var goalLbl=document.getElementById('vGoal');
+  if(goalLbl)goalLbl.textContent=fn(goal)+' ₽';
+
+  var newExp=C_EXP-saving;
+  var ms=C_INC-newExp;
+  var sr=C_INC>0?(ms/C_INC*100).toFixed(1):0;
+  var months=ms>0?Math.ceil(goal/ms):'∞';
+
+  var s=function(id,v){var e=document.getElementById(id);if(e)e.textContent=v;};
+  s('calcCurExp',fn(C_EXP)+' ₽');
+  s('calcSaving','+'+fn(saving)+' ₽');
+  s('calcNewExp',fn(newExp)+' ₽');
+  s('calcMonthSave',fn(ms)+' ₽');
+  s('calcSavRate',sr+'%');
+  s('calcMonths',months);
+  s('goalAmt',fn(goal)+' ₽');
+}
+
+// ══ РЕКОМЕНДАЦИИ ══
+function renderRecs(){
+  var g=document.getElementById('recsGrid');if(!g||!A.insights)return;
+  if(A.insights.length===0){g.innerHTML='<div style="color:var(--text3);padding:20px">Недостаточно данных</div>';return;}
+  var h='';
+  for(var i=0;i<A.insights.length;i++){
+    var r=A.insights[i];
+    h+='<div class="rcard '+r.type+'"><div class="ricon">'+r.icon+'</div>'+
+      '<div class="rbody"><h4>'+r.title+'</h4><p>'+r.text+'</p>'+
+      '<span class="sbadge">💚 '+r.saving+'</span></div></div>';
+  }
+  g.innerHTML=h;
+}
+
+// ══ TABS ══
+var _rendered={dynamics:true};
+function sw(name,btn){
+  var tcs=document.querySelectorAll('.tc');
+  var btns=document.querySelectorAll('.tab-btn');
+  for(var i=0;i<tcs.length;i++)tcs[i].classList.remove('active');
+  for(var i=0;i<btns.length;i++)btns[i].classList.remove('active');
+  document.getElementById('tab-'+name).classList.add('active');
+  if(btn)btn.classList.add('active');
+  setTimeout(function(){window.dispatchEvent(new Event('resize'));},60);
+  if(!_rendered[name]){
+    _rendered[name]=true;
+    if(name==='behavior'){renderDeliveryDow();renderDeliveryPie();renderCoffee();renderHourly();}
+    if(name==='taxi')renderTaxi();
+    if(name==='fines')renderFines();
+    if(name==='timeofday')renderPeriods();
+    if(name==='categories'){renderBubble();renderSubs();}
+    if(name==='leaky')renderGrowth();
+    if(name==='flows'){renderSankey();renderPies();}
+    if(name==='forecast'){buildCalcSliders();updateCalc();}
+    if(name==='recs')renderRecs();
+  }
+}
+
+// ══ INIT ══
+document.addEventListener('DOMContentLoaded',function(){
+  renderBalance();
+  renderMonthly();
+  renderBurst();
+  renderHeatmap();
+});
+</script>
+</body>
+</html>

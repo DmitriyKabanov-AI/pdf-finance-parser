@@ -1,0 +1,25 @@
+﻿# Данные (не выгружаем)
+*.pdf
+*.xlsx
+*.html
+!Template/*.html
+
+# Отчёты и выписки
+reports/
+Statements/*
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Временные файлы
+generate_readme.py
