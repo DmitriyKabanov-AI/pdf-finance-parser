@@ -117,7 +117,9 @@ def main():
         return
     
     final_df = pd.concat(all_dfs, ignore_index=True)
-    output = folder / "transactions_consolidated.xlsx"
+    reports_dir = script_dir / "reports"
+    reports_dir.mkdir(exist_ok=True)
+    output = reports_dir / "transactions_consolidated.xlsx"
     final_df.to_excel(output, index=False)
     print(f"\nСохранено {len(final_df)} транзакций в {output}")
 
