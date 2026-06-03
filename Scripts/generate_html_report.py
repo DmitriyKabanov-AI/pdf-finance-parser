@@ -601,11 +601,14 @@ def parse_dates(df: pd.DataFrame) -> pd.DataFrame:
 
 def parse_amounts(df: pd.DataFrame) -> pd.DataFrame:
     def clean(v):
-        if pd.isna(v): return 0.0
+        if pd.isna(v): 
+            return 0.0
         s = str(v).replace(' ','').replace('\xa0','').replace(',','.')
         s = re.sub(r'[^\d.\-+]', '', s)
-        try: return float(s)
-        except ValueError: return 0.0
+        try: 
+            return float(s)
+        except ValueError: 
+            return 0.0
     df['amount']     = df['amount'].apply(clean)
     df['amount_abs'] = df['amount'].abs()
     df['is_income']  = df['amount'] > 0
@@ -615,12 +618,15 @@ def parse_amounts(df: pd.DataFrame) -> pd.DataFrame:
 
 def filter_internal_transfers(df: pd.DataFrame) -> pd.DataFrame:
     def is_internal(desc):
-        if pd.isna(desc): return False
+        if pd.isna(desc): 
+            return False
         d = str(desc).lower()
         for w in EXTERNAL_INCOME_WHITELIST:
-            if w in d: return False
+            if w in d: 
+                return False
         for kw in INTERNAL_TRANSFER_KEYWORDS:
-            if kw in d: return True
+            if kw in d: 
+                return True
         return False
     mask = df['description'].apply(is_internal)
     removed = mask.sum()
@@ -631,7 +637,8 @@ def filter_internal_transfers(df: pd.DataFrame) -> pd.DataFrame:
 
 def categorize(df: pd.DataFrame) -> pd.DataFrame:
     def get_cat(desc):
-        if pd.isna(desc): return "Прочее"
+        if pd.isna(desc): 
+            return "Прочее"
         d = str(desc).lower()
         for cat_name, kws in CATEGORY_RULES:
             if any(k in d for k in kws):
@@ -639,22 +646,26 @@ def categorize(df: pd.DataFrame) -> pd.DataFrame:
         return "Прочее"
 
     def is_taxi(desc):
-        if pd.isna(desc): return False
+        if pd.isna(desc): 
+            return False
         d = str(desc).lower()
         return any(k in d for k in TAXI_KEYWORDS)
 
     def is_metro(desc):
-        if pd.isna(desc): return False
+        if pd.isna(desc): 
+            return False
         d = str(desc).lower()
         return any(k in d for k in METRO_KEYWORDS)
 
     def is_fine(desc):
-        if pd.isna(desc): return False
+        if pd.isna(desc): 
+            return False
         d = str(desc).lower()
         return any(k in d for k in FINE_KEYWORDS)
 
     def is_imp(desc):
-        if pd.isna(desc): return False
+        if pd.isna(desc): 
+            return False
         d = str(desc).lower()
         return any(k in d for k in IMPULSIVE_KEYWORDS)
 
@@ -675,9 +686,12 @@ def categorize(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def classify_period(hour: int) -> str:
-    if   0 <= hour <  8: return "night"
-    elif 8 <= hour < 16: return "day"
-    else:                return "evening"
+    if   0 <= hour <  8: 
+        return "night"
+    elif 8 <= hour < 16: 
+        return "day"
+    else:                
+        return "evening"
 
 
 # ═══════════════════════════════════════════════════════
@@ -687,9 +701,11 @@ def fmt_r(v):
     """Форматирование числа с пробелами-разделителями."""
     try:
         v = float(v)
-        if v == int(v): return f"{int(v):,}".replace(",", " ")
+        if v == int(v): 
+            return f"{int(v):,}".replace(",", " ")
         return f"{v:,.2f}".replace(",", " ")
-    except: return str(v)
+    except Exception: 
+        return str(v)
 
 
 def compute_analytics(df: pd.DataFrame) -> dict:
@@ -838,16 +854,26 @@ def compute_analytics(df: pd.DataFrame) -> dict:
         del_desc_cats = {}
         for _, r in del_exp.iterrows():
             d = str(r['description']).lower()
-            if 'dodo' in d:          k = 'Dodo Pizza'
-            elif 'kfc' in d:         k = 'KFC'
-            elif 'бургер' in d or 'burger' in d: k = 'Burger King'
-            elif 'вкусно' in d:      k = 'Вкусно и точка'
-            elif 'яндекс еда' in d:  k = 'Яндекс Еда'
-            elif 'самокат' in d or 'samokat' in d: k = 'Самокат'
-            elif 'лавка' in d:       k = 'Лавка'
-            elif 'пицца' in d or 'pizza' in d: k = 'Пиццерии'
-            elif 'суши' in d or 'sushi' in d:  k = 'Суши'
-            else:                    k = 'Другое'
+            if 'dodo' in d:          
+                k = 'Dodo Pizza'
+            elif 'kfc' in d:         
+                k = 'KFC'
+            elif 'бургер' in d or 'burger' in d: 
+                k = 'Burger King'
+            elif 'вкусно' in d:      
+                k = 'Вкусно и точка'
+            elif 'яндекс еда' in d:  
+                k = 'Яндекс Еда'
+            elif 'самокат' in d or 'samokat' in d: 
+                k = 'Самокат'
+            elif 'лавка' in d:       
+                k = 'Лавка'
+            elif 'пицца' in d or 'pizza' in d: 
+                k = 'Пиццерии'
+            elif 'суши' in d or 'sushi' in d:  
+                k = 'Суши'
+            else:                    
+                k = 'Другое'
             del_desc_cats[k] = del_desc_cats.get(k, 0) + abs(float(r['amount_pos']))
         sorted_dc = sorted(del_desc_cats.items(), key=lambda x: x[1], reverse=True)
         A['delivery_pie_labels'] = [x[0] for x in sorted_dc]
@@ -955,12 +981,16 @@ def compute_analytics(df: pd.DataFrame) -> dict:
     for i, cat in enumerate(inc_cats):
         v = round(float(inc_by_cat[cat]), 2)
         if v > 0:
-            s_src.append(i); s_tgt.append(mid); s_val.append(v)
+            s_src.append(i) 
+            s_tgt.append(mid) 
+            s_val.append(v)
             s_col.append('rgba(16,185,129,0.35)')
     for j, cat in enumerate(exp_cats):
         v = round(float(exp_by_cat[cat]), 2)
         if v > 0:
-            s_src.append(mid); s_tgt.append(mid + 1 + j); s_val.append(v)
+            s_src.append(mid) 
+            s_tgt.append(mid + 1 + j) 
+            s_val.append(v)
             s_col.append('rgba(239,68,68,0.25)')
     A['sankey'] = {'labels': s_labels, 'src': s_src, 'tgt': s_tgt,
                    'val': s_val, 'colors': s_col}
