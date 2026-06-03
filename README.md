@@ -268,13 +268,7 @@ pip install -r requirements.txt
 
 # 2. Положите PDF-выписки Т-Банка в папку Statements/
 
-# 3. Запустите парсинг PDF
-python Scripts/pdf_final_parser.py
-
-# 4. Запустите генерацию дашборда
-python Scripts/generate_html_report.py
-
-# 5. Откройте reports/FinPulse_Interactive_Dashboard.html
+# 3. Запустите python main.py
 ```
 
 ## 📊 Что вы получите
